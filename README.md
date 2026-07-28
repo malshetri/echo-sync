@@ -48,6 +48,7 @@ course at HTW Berlin.
 |-- scripts/                # Test-audio and report helpers
 |-- tests/                  # Automated test suite
 |-- logs/                   # Interaction logs
+|-- NUI architecture.drawio # Editable system architecture
 |-- pyproject.toml          # Package metadata and dependencies
 `-- README.md
 ```
@@ -99,21 +100,16 @@ Each interaction passes through an accessible audio-first pipeline:
    assistant is talking.
 7. **Log** -- save the interaction for testing and evaluation.
 
-```mermaid
-flowchart LR
-    U[User speech] --> R[Recorder]
-    R --> S[Speech-to-text]
-    S --> W[Wake-word and state]
-    W --> I[Intent classifier]
-    I -->|Direct command| D[Dialog manager]
-    I -->|Context request| C[Context mapper]
-    I -->|Help or unclear| H[Guided help]
-    C --> P[Playlist manager]
-    P --> D
-    D --> M[VLC or Pygame]
-    H --> F[Spoken response and earcon]
-    D --> F
-```
+### Project Architecture
+
+The following architecture was designed by the Echo-Sync team and shows the
+complete voice pipeline, modality routing, playback services, feedback
+channels, interaction logging, and wake/sleep state machine.
+
+[![Echo-Sync NUI architecture](docs/nui-architecture.svg)](<NUI architecture.drawio>)
+
+The editable diagram is available in
+[NUI architecture.drawio](<NUI architecture.drawio>).
 
 
 ## Interaction Modalities
