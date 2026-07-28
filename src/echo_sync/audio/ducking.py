@@ -16,7 +16,7 @@ import time
 
 logger = logging.getLogger(__name__)
 
-# ── Ducking defaults ────────────────────────────────────────────────────────
+# Ducking defaults
 DEFAULT_DUCKING_VOLUME = 30      # Volume level during ducking (%)
 DEFAULT_FADE_DURATION = 1.5      # Seconds to fade volume back up
 DEFAULT_FADE_STEPS = 15          # Number of steps in the fade
@@ -105,7 +105,7 @@ class SmartDucker:
 
             self._is_ducked = False
 
-        # Fade in a background thread to avoid blocking
+        # Restore volume in the background so the dialog can continue.
         self._fade_thread = threading.Thread(
             target=self._fade_to_volume,
             args=(self._original_volume,),
@@ -126,14 +126,14 @@ class SmartDucker:
 
             for i in range(step_count):
                 if self._is_ducked:
-                    # Ducking was re-engaged during fade — abort
+                    # A new request started before the fade finished.
                     return
                 new_volume = int(current + volume_step * (i + 1))
                 new_volume = max(0, min(100, new_volume))
                 self._player.set_volume(new_volume)
                 time.sleep(step_delay)
 
-            # Ensure exact final volume
+            # Finish at the saved volume despite integer fade steps.
             self._player.set_volume(target_volume)
             logger.info("Volume restored to %d%%", target_volume)
 

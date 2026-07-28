@@ -88,7 +88,7 @@ class GuidedHelp:
         """Handle off-topic requests."""
         self._silence_count = 0
 
-        # Alternate between firm and gentle rejections
+        # Vary repeated replies so they do not sound mechanical.
         if self._help_count % 2 == 0:
             response = RESPONSE_OFF_TOPIC
         else:

@@ -16,7 +16,7 @@ from echo_sync.config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
-# ── CSV column headers ──────────────────────────────────────────────────────
+# Columns used by both the logger and report script
 CSV_HEADERS = [
     "timestamp",
     "audio_file",

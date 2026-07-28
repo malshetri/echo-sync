@@ -21,7 +21,7 @@ from echo_sync.config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
-# ── Earcon names ────────────────────────────────────────────────────────────
+# Earcon file names
 EARCON_LISTENING = "listening"
 EARCON_SUCCESS = "success"
 EARCON_ERROR = "error"
@@ -115,7 +115,7 @@ class EarconManager:
                 pygame.mixer.init()
             sound = pygame.mixer.Sound(str(path))
             sound.play()
-            # Wait for playback to finish
+            # Earcons are short and should finish before the next response.
             import time
             while pygame.mixer.get_busy():
                 time.sleep(0.05)

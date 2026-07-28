@@ -14,7 +14,8 @@ from echo_sync.config.settings import Settings
 logger = logging.getLogger(__name__)
 
 
-# ── Context to playlist folder mapping ──────────────────────────────────────
+# Context-to-folder mapping
+# The values match the folder names under assets/music.
 CONTEXT_TO_FOLDER = {
     "calm": "calm",
     "energy": "energy",

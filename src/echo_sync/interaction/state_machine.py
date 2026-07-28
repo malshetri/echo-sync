@@ -22,7 +22,7 @@ class AppState(Enum):
     SHUTTING_DOWN = auto()          # System is shutting down
 
 
-# ── Valid state transitions ─────────────────────────────────────────────────
+# Allowed state transitions
 VALID_TRANSITIONS: dict[AppState, set[AppState]] = {
     AppState.SLEEPING: {
         AppState.SLEEPING,
@@ -119,7 +119,7 @@ class StateMachine:
         """Check if the system is in an active (non-terminal) state."""
         return self._state != AppState.SHUTTING_DOWN
 
-    # ── State Checks ────────────────────────────────────────────────────────
+    # State checks
     
     def is_awake(self) -> bool:
         """Check if the system is actively waiting for a command or clarifying."""
@@ -129,7 +129,7 @@ class StateMachine:
         """Check if the system is passively playing music or sleeping."""
         return self._state in {AppState.SLEEPING, AppState.PLAYING_PASSIVE}
 
-    # ── State Changers ──────────────────────────────────────────────────────
+    # State changes
     
     def wake(self) -> None:
         """Wake up the system to wait for a command."""

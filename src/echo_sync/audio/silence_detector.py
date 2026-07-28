@@ -11,7 +11,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# ── Default thresholds ──────────────────────────────────────────────────────
+# Silence thresholds
 DEFAULT_SILENCE_THRESHOLD = 0.02  # RMS amplitude below this = silence
 DEFAULT_SILENCE_DURATION = 1.5    # Seconds of silence to stop recording
 DEFAULT_MIN_SPEECH_DURATION = 0.3  # Minimum seconds of speech to be valid
@@ -46,7 +46,7 @@ class SilenceDetector:
         self.min_speech_duration = min_speech_duration
         self.sample_rate = sample_rate
 
-        # Internal state
+        # State is reset for each recording.
         self._silence_samples = 0
         self._speech_samples = 0
         self._has_speech = False
@@ -71,7 +71,7 @@ class SilenceDetector:
         rms = self._calculate_rms(audio_chunk)
 
         if rms > self.threshold:
-            # Speech detected
+            # A louder block starts or continues speech.
             self._speech_samples += len(audio_chunk)
             self._silence_samples = 0
 
@@ -81,10 +81,10 @@ class SilenceDetector:
                     self._has_speech = True
                     logger.debug("Speech detected (%.2fs)", speech_seconds)
         else:
-            # Silence detected
+            # Count quiet blocks only after speech has started.
             self._silence_samples += len(audio_chunk)
 
-        # Stop if we've had speech followed by enough silence
+        # Enough trailing silence means the command is complete.
         if self._has_speech:
             silence_seconds = self._silence_samples / self.sample_rate
             if silence_seconds >= self.silence_duration:

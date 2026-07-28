@@ -12,7 +12,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# ── Supported audio formats ─────────────────────────────────────────────────
+# Audio formats scanned from the music folders
 SUPPORTED_EXTENSIONS = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
 
 

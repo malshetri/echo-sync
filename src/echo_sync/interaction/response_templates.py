@@ -5,7 +5,7 @@ Pre-built response strings for all system messages.
 These are used for spoken feedback to the user via TTS or console output.
 """
 
-# ── Direct Command Responses ────────────────────────────────────────────────
+# Direct command responses
 
 RESPONSE_PLAY = "Playing music."
 RESPONSE_PAUSE = "Music paused."
@@ -16,7 +16,7 @@ RESPONSE_PREVIOUS = "Playing previous song."
 RESPONSE_VOLUME_UP = "Volume increased."
 RESPONSE_VOLUME_DOWN = "Volume decreased."
 
-# ── Context/Mood Responses ──────────────────────────────────────────────────
+# Context responses
 
 RESPONSE_CONTEXT_TEMPLATE = "I'll play something {description} for you."
 RESPONSE_CONTEXT_MAP = {
@@ -28,7 +28,7 @@ RESPONSE_CONTEXT_MAP = {
     "unknown": "I'll play a mix of music for you.",
 }
 
-# ── Help Responses ──────────────────────────────────────────────────────────
+# Help responses
 
 RESPONSE_HELP_GENERAL = (
     "I can help you control music. You can say: "
@@ -47,7 +47,7 @@ RESPONSE_HELP_MOODS = (
     "I'm happy, I feel sad."
 )
 
-# ── Error / Unclear Responses ───────────────────────────────────────────────
+# Error and clarification responses
 
 RESPONSE_UNCLEAR = (
     "I didn't quite catch that. "
@@ -71,7 +71,7 @@ RESPONSE_STT_FAILED = (
     "Could you try again? You can say: play, pause, or help."
 )
 
-# ── Off-Topic Responses ─────────────────────────────────────────────────────
+# Off-topic responses
 
 RESPONSE_OFF_TOPIC = (
     "I'm only specialized in music. "
@@ -85,7 +85,7 @@ RESPONSE_OFF_TOPIC_GENTLE = (
     "calm, energetic, or focused?"
 )
 
-# ── System Messages ─────────────────────────────────────────────────────────
+# System messages
 
 RESPONSE_WELCOME = (
     "Welcome to Echo-Sync. "

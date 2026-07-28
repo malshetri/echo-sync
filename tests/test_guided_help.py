@@ -19,7 +19,7 @@ def helper():
 class TestGuidedHelp:
     """Test guided help response generation."""
 
-    # ── Silence handling ────────────────────────────────────────────
+    # Silence handling
 
     def test_silence_first(self, helper):
         """First silence should give a basic help message."""
@@ -32,12 +32,11 @@ class TestGuidedHelp:
         r1 = helper.handle_silence()
         r2 = helper.handle_silence()
         r3 = helper.handle_silence()
-        # All should be non-empty
         assert r1 and r2 and r3
-        # Messages should vary
+        # Progressive help should not repeat the same sentence.
         assert r1 != r3 or r2 != r3
 
-    # ── Unclear speech handling ─────────────────────────────────────
+    # Unclear speech
 
     def test_unclear_with_transcript(self, helper):
         """Unclear with transcript should include what was heard."""
@@ -50,7 +49,7 @@ class TestGuidedHelp:
         assert response
         assert "say" in response.lower()
 
-    # ── Off-topic handling ──────────────────────────────────────────
+    # Off-topic requests
 
     def test_off_topic(self, helper):
         """Off-topic should politely redirect to music."""
@@ -64,7 +63,7 @@ class TestGuidedHelp:
         assert r1  # Not empty
         assert r2  # Not empty
 
-    # ── Help request handling ───────────────────────────────────────
+    # Help requests
 
     def test_help_request(self, helper):
         """Help request should list available commands."""
@@ -82,7 +81,7 @@ class TestGuidedHelp:
         r3 = helper.handle_help_request()
         assert r1 and r2 and r3
 
-    # ── Low confidence handling ─────────────────────────────────────
+    # Low-confidence results
 
     def test_low_confidence(self, helper):
         """Low confidence should trigger clarification."""
@@ -97,7 +96,7 @@ class TestGuidedHelp:
         assert response
         assert "say" in response.lower() or "mean" in response.lower()
 
-    # ── STT failure handling ────────────────────────────────────────
+    # Speech-to-text failures
 
     def test_stt_failure(self, helper):
         """STT failure should ask user to try again."""
@@ -105,7 +104,7 @@ class TestGuidedHelp:
         assert response
         assert "try" in response.lower() or "again" in response.lower()
 
-    # ── Counter reset ───────────────────────────────────────────────
+    # Counter reset
 
     def test_reset_counters(self, helper):
         """Reset should clear help and silence counters."""
@@ -113,6 +112,6 @@ class TestGuidedHelp:
         helper.handle_silence()
         helper.handle_help_request()
         helper.reset_counters()
-        # After reset, first silence should give first message again
+        # Resetting starts the progressive sequence from the beginning.
         r1 = helper.handle_silence()
         assert r1  # Should be the first-silence response

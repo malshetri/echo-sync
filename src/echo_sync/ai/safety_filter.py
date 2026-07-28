@@ -37,7 +37,7 @@ class SafetyFilter:
         Returns:
             A validated (possibly modified) IntentResult.
         """
-        # Check low confidence
+        # Ask for clarification instead of guessing on weak results.
         if result.is_low_confidence(self.confidence_threshold):
             logger.info(
                 "Low confidence (%.2f) — triggering clarification",
@@ -54,16 +54,15 @@ class SafetyFilter:
                 ),
             )
 
-        # Ensure off-topic requests don't leak through
+        # Off-topic requests must always use the reject action.
         if result.intent_type == "off_topic" and result.action != "reject":
             logger.warning("Off-topic intent without reject action — fixing")
             result.action = "reject"
 
-        # Ensure user_feedback is not empty
         if not result.user_feedback or not result.user_feedback.strip():
             result.user_feedback = "Done."
 
-        # Ensure interpreted_context is valid for direct commands
+        # Direct controls do not need a mood or context category.
         if result.intent_type == "direct_command" and result.interpreted_context == "unknown":
             result.interpreted_context = "none"
 

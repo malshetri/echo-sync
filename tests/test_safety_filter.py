@@ -29,7 +29,7 @@ def safety_filter(mock_settings):
 class TestSafetyFilter:
     """Test the safety filter validation."""
 
-    # ── Low confidence ──────────────────────────────────────────────
+    # Low confidence
 
     def test_low_confidence_triggers_clarification(self, safety_filter):
         """Low confidence should be overridden to 'unclear/clarify'."""
@@ -69,7 +69,7 @@ class TestSafetyFilter:
         result = safety_filter.validate(intent)
         assert result.intent_type == "direct_command"
 
-    # ── Off-topic fixes ─────────────────────────────────────────────
+    # Off-topic normalization
 
     def test_off_topic_without_reject_is_fixed(self, safety_filter):
         """Off-topic with wrong action should be fixed to 'reject'."""
@@ -96,7 +96,7 @@ class TestSafetyFilter:
         assert result.action == "reject"
         assert result.intent_type == "off_topic"
 
-    # ── Empty feedback ──────────────────────────────────────────────
+    # Empty feedback
 
     def test_empty_feedback_is_fixed(self, safety_filter):
         """Empty user_feedback should be filled with default."""
@@ -110,7 +110,7 @@ class TestSafetyFilter:
         result = safety_filter.validate(intent)
         assert result.user_feedback  # Should not be empty
 
-    # ── Unsafe phrase detection ─────────────────────────────────────
+    # Unsafe phrase detection
 
     def test_safe_response(self, safety_filter):
         """Normal response should be safe."""

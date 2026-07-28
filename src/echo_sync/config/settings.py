@@ -11,7 +11,7 @@ from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# Project root is 3 levels up from this file: src/echo_sync/config/settings.py
+# Keep asset paths relative to the repository instead of a user's computer.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 
@@ -25,35 +25,35 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # ── OpenAI API ──────────────────────────────────────────────────
-    # Note: OPENAI_API_KEY has no prefix — it's a standard env var
+    # OpenAI
+    # OpenAI uses its usual unprefixed environment variable.
     openai_api_key: str = "your_api_key_here"
 
-    # ── Speech-to-Text ──────────────────────────────────────────────
+    # Speech-to-text
     stt_mode: Literal["openai", "offline"] = "openai"
     stt_model: str = "gpt-4o-mini-transcribe"
 
-    # ── AI Intent Classification ────────────────────────────────────
+    # Intent classification
     ai_model: str = "gpt-4o-mini"
 
-    # ── Media Player ────────────────────────────────────────────────
+    # Media player
     player: Literal["vlc", "pygame"] = "vlc"
     default_volume: int = 80
     ducking_volume: int = 30
 
-    # ── Timeouts and Thresholds ─────────────────────────────────────
+    # Interaction timing
     silence_timeout: int = 10
     confidence_threshold: float = 0.6
     
-    # ── Wake Word ───────────────────────────────────────────────────
+    # Voice activation
     wake_word: str = "echo"
 
-    # ── Paths ───────────────────────────────────────────────────────
+    # Paths relative to PROJECT_ROOT
     music_dir: str = "assets/music"
     earcons_dir: str = "assets/earcons"
     log_file: str = "logs/interaction_logs.csv"
 
-    # ── Derived Paths ───────────────────────────────────────────────
+    # Absolute paths used by the application
     @property
     def music_path(self) -> Path:
         """Absolute path to the music assets directory."""
@@ -81,12 +81,11 @@ def load_settings() -> Settings:
     import os
     from dotenv import load_dotenv
 
-    # Load .env file explicitly so os.environ has the values
+    # Load the standard OpenAI variable before Pydantic reads the settings.
     load_dotenv(PROJECT_ROOT / ".env")
 
     settings = Settings()
 
-    # Override openai_api_key from the un-prefixed env var
     api_key = os.environ.get("OPENAI_API_KEY", settings.openai_api_key)
     settings.openai_api_key = api_key
 
