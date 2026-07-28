@@ -1,57 +1,33 @@
-# ──────────────────────────────────────────────
-# Python
-# ──────────────────────────────────────────────
+# Python cache and build output
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
 *.egg-info/
-*.egg
-dist/
 build/
-.eggs/
+dist/
+.pytest_cache/
+.test-tmp/
+.coverage
+htmlcov/
+.ruff_cache/
+.uv-cache/
+.uv-python/
 
-# ──────────────────────────────────────────────
-# Virtual environments
-# ──────────────────────────────────────────────
+# Local environments and secrets
 .venv/
 venv/
-env/
-
-# ──────────────────────────────────────────────
-# uv
-# ──────────────────────────────────────────────
-uv.lock
-
-# ──────────────────────────────────────────────
-# Environment variables (secrets)
-# ──────────────────────────────────────────────
 .env
+.env.*
+!.env.example
 
-# ──────────────────────────────────────────────
-# IDE
-# ──────────────────────────────────────────────
+# Echo-Sync runtime files
+.echo_sync_setup_complete
+logs/*
+!logs/.gitkeep
+test_recording.wav
+
+# Editors and operating systems
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
-
-# ──────────────────────────────────────────────
-# OS
-# ──────────────────────────────────────────────
 .DS_Store
 Thumbs.db
-
-# ──────────────────────────────────────────────
-# Logs (keep the directory, ignore contents)
-# ──────────────────────────────────────────────
-logs/*.csv
-logs/*.log
-!logs/.gitkeep
-
-# ──────────────────────────────────────────────
-# Temporary audio recordings
-# ──────────────────────────────────────────────
-*.tmp.wav
-recordings/
+Desktop.ini
