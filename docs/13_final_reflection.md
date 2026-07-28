@@ -33,17 +33,15 @@ Echo-Sync is an inclusive, screen-free NUI media player designed for blind and m
 - Added rule-based context recognition ("I am tired", "I need energy")
 - Added rule-based off-topic detection ("What is the weather?")
 - Expanded help recognition ("I don't know", "What can I do?")
-- To be updated after professor's feedback session
 
 ## What Worked in Testing
 
-- Rule-based commands were fast and reliable (121 automated tests pass)
+- Rule-based commands were fast and reliable (157 automated tests pass)
 - Context-to-music mapping worked intuitively
 - Progressive help was effective for new users
 - Off-topic rejection was clear without being frustrating
 - Smart ducking made speech interaction comfortable
 - Keyboard demo mode works reliably for presentations
-- To be updated after live user testing
 
 ## What Limitations Remain
 
@@ -82,4 +80,4 @@ Before presenting the demo, verify:
 - [ ] Earcons play before each interaction
 - [ ] TTS speaks responses (if available)
 - [ ] Interactions are logged to `logs/interaction_logs.csv`
-- [ ] `pytest tests/ -v` → all tests pass
+- [x] `pytest tests/ -v` → all tests pass

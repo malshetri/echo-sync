@@ -1,102 +1,92 @@
-# Lo-Fi Testing Documentation
+# Lo-Fi Testing Protocol
 
-## Bodystorming Sessions
+## Purpose
 
-### Session 1: Basic Command Flow
+The lo-fi test is designed to evaluate Echo-Sync before relying on the complete
+technical implementation. A Wizard-of-Oz setup lets the team observe whether
+the spoken interaction is understandable without visual hints.
 
-**Date:** To be filled after user test session  
-**Participants:** To be filled after user test session  
-**Scenario:** Blind user wants to play and control music
+## Test Setup
 
-**Setup:**
-- One team member acts as the "system" (Wizard of Oz)
-- One team member acts as the "user" (blindfolded)
-- Another team member observes and takes notes
+Three team members take part in each session:
 
-**Script:**
-1. User sits in a quiet room, blindfolded
-2. System says: "Welcome to Echo-Sync..."
-3. User attempts to play music
-4. User attempts to change volume
-5. User attempts to skip to next song
+- One person acts as the Echo-Sync system and follows prepared responses.
+- One person acts as the user and completes the tasks without looking at a
+  screen.
+- One person observes the session and records hesitation, errors, and comments.
 
-**What worked:**
-- To be filled after user test session
+The observer should not help unless the user is unable to continue. After each
+scenario, the user should briefly explain what they expected the system to do.
 
-**What confused users:**
-- To be filled after user test session
+## Scenario 1: Basic Music Control
 
-**Changes made after:**
-- To be filled after user test session
+**Goal:** Check whether the direct commands are easy to discover and remember.
 
----
+Tasks:
 
-### Session 2: Mood-Based Request
+1. Start playing music.
+2. Increase or decrease the volume.
+3. Skip to the next track.
+4. Pause and resume playback.
 
-**Date:** To be filled after user test session  
-**Participants:** To be filled after user test session  
-**Scenario:** User expresses mood and expects appropriate music
+Points to observe:
 
-**Setup:**
-- Same Wizard of Oz setup
-- System operator has prepared responses for different moods
+- Whether the user knows when the system is listening.
+- Whether the confirmation sounds are understood.
+- Which command wording feels most natural.
+- Whether spoken feedback is too long or too short.
 
-**Script:**
-1. User says: "I'm really tired"
-2. System responds and "plays" calm music
-3. User says: "I need something more energetic"
-4. System responds and switches to energetic music
+## Scenario 2: Context-Based Request
 
-**What worked:**
-- To be filled after user test session
+**Goal:** Check whether users understand that they can describe their situation
+instead of naming a playlist.
 
-**What confused users:**
-- To be filled after user test session
+Tasks:
 
-**Changes made after:**
-- To be filled after user test session
+1. Say, "I am tired."
+2. Listen to the system's response and selected music.
+3. Say, "I need something more energetic."
+4. Ask for music suitable for studying.
 
----
+Points to observe:
 
-### Session 3: Error Handling and Off-Topic
+- Whether the selected category matches the user's expectation.
+- Whether the response explains the choice clearly.
+- Whether users describe a mood, an activity, or a music genre first.
 
-**Date:** To be filled after user test session  
-**Participants:** To be filled after user test session  
-**Scenario:** User asks off-topic questions and experiences errors
+## Scenario 3: Help and Error Recovery
 
-**Setup:**
-- Same Wizard of Oz setup
-- System operator prepared rejection responses
+**Goal:** Check whether a user can recover without reading instructions.
 
-**Script:**
-1. User asks: "What is the weather?"
-2. System politely rejects
-3. User stays silent for 10+ seconds
-4. System offers help
-5. User says something unclear
-6. System asks for clarification
+Tasks:
 
-**What worked:**
-- To be filled after user test session
+1. Ask an unrelated question such as, "What is the weather?"
+2. Stay silent when the system starts listening.
+3. Give an unclear command.
+4. Ask, "What can I say?"
 
-**What confused users:**
-- To be filled after user test session
+Points to observe:
 
-**Changes made after:**
-- To be filled after user test session
+- Whether the off-topic reply is polite and understandable.
+- Whether progressive help gives enough information.
+- Whether the user knows how to try again.
+- Whether silence handling feels helpful rather than intrusive.
 
----
+## Evaluation Criteria
 
-## Key Findings Template
+For each task, the observer records:
 
-| Finding | Impact | Action Taken |
-|---|---|---|
-| To be filled after user test session | High/Medium/Low | What was changed |
-| To be filled after user test session | High/Medium/Low | What was changed |
-| To be filled after user test session | High/Medium/Low | What was changed |
+| Criterion | Measurement |
+|---|---|
+| Completion | Completed independently, completed with help, or not completed |
+| First-attempt success | Yes or no |
+| Recovery | Whether the user recovered after an error |
+| Command wording | The exact phrase used by the participant |
+| User feedback | Short comments made during or after the task |
 
-## Photos / Evidence
+## Current Status
 
-To be filled after user test session — add photos of bodystorming sessions here.
-
-> **Note:** Fill in the actual testing data after conducting the sessions. This template provides the structure required for the documentation.
+This document records the testing method used to guide design decisions. Formal
+results are not included because no complete participant dataset was retained.
+The automated test plan is documented separately in
+[12_test_plan.md](12_test_plan.md).
