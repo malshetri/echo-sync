@@ -20,7 +20,7 @@ from echo_sync.audio.silence_detector import SilenceDetector
 
 logger = logging.getLogger(__name__)
 
-# ── Recording defaults ──────────────────────────────────────────────────────
+# Recording defaults
 DEFAULT_SAMPLE_RATE = 16000
 DEFAULT_CHANNELS = 1
 DEFAULT_CHUNK_SIZE = 1024
@@ -44,11 +44,14 @@ class MicrophoneRecorder:
         channels: int = DEFAULT_CHANNELS,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         max_duration: float = DEFAULT_MAX_DURATION,
+        no_speech_timeout: float = 10.0,
     ) -> None:
         self.sample_rate = sample_rate
         self.channels = channels
         self.chunk_size = chunk_size
         self.max_duration = max_duration
+        # Stop waiting when no speech begins, allowing guided help to respond.
+        self.no_speech_timeout = no_speech_timeout
 
         self.silence_detector = SilenceDetector(sample_rate=sample_rate)
 
@@ -93,8 +96,21 @@ class MicrophoneRecorder:
                 while self._recording:
                     time.sleep(0.05)  # Small sleep to prevent busy-waiting
 
-                    # Safety: max duration
                     elapsed = time.time() - start_time
+
+                    # Return an empty recording after the no-speech timeout.
+                    if (
+                        self.silence_detector.is_only_silence()
+                        and elapsed >= self.no_speech_timeout
+                    ):
+                        logger.info(
+                            "No speech within %.0fs — stopping (silence timeout)",
+                            self.no_speech_timeout,
+                        )
+                        self._recording = False
+                        break
+
+                    # Do not leave the microphone recording indefinitely.
                     if elapsed >= self.max_duration:
                         logger.warning(
                             "Maximum recording duration (%.0fs) reached",
@@ -103,7 +119,6 @@ class MicrophoneRecorder:
                         self._recording = False
                         break
 
-            # Save the recording
             if self._audio_data:
                 audio_array = np.concatenate(self._audio_data, axis=0)
                 sf.write(
@@ -143,7 +158,7 @@ class MicrophoneRecorder:
         with self._lock:
             self._audio_data.append(indata.copy())
 
-            # Check for silence (end of speech)
+            # Silence after speech marks the end of the command.
             if self.silence_detector.process_chunk(indata[:, 0]):
                 self._recording = False
 

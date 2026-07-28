@@ -26,6 +26,7 @@ from echo_sync.audio.tts import TTSService
 from echo_sync.config.prompts import WELCOME_MESSAGE, GOODBYE_MESSAGE
 from echo_sync.config.settings import Settings
 from echo_sync.interaction.dialog_manager import DialogManager
+from echo_sync.interaction.onboarding import OnboardingWizard
 from echo_sync.interaction.state_machine import AppState, StateMachine
 from echo_sync.logging_utils.interaction_logger import InteractionLogger
 from echo_sync.media.playlist_manager import PlaylistManager
@@ -77,15 +78,19 @@ class EchoSyncApp:
         self,
         settings: Settings,
         demo_keyboard: bool = False,
+        force_setup: bool = False,
+        skip_setup: bool = False,
     ) -> None:
         self.settings = settings
         self.demo_keyboard = demo_keyboard
+        self.force_setup = force_setup
+        self.skip_setup = skip_setup
         self.state_machine = StateMachine()
         self.running = False
-        # In keyboard demo mode, skip wake-word so commands work directly
+        # Keyboard mode accepts commands immediately, without a wake word.
         self.active_session = demo_keyboard
 
-        # ── Initialize components ───────────────────────────────────
+        # Set up the services used by the interaction loop.
         console.print("[dim]Initializing Echo-Sync...[/dim]")
 
         # Media player
@@ -100,7 +105,9 @@ class EchoSyncApp:
         self.ducker.attach_player(self.player)
 
         if not demo_keyboard:
-            self.recorder = MicrophoneRecorder()
+            self.recorder = MicrophoneRecorder(
+                no_speech_timeout=settings.silence_timeout,
+            )
         else:
             self.recorder = None
 
@@ -124,10 +131,21 @@ class EchoSyncApp:
         # Logging
         self.interaction_logger = InteractionLogger(settings)
 
-        # Text-to-speech (best-effort)
+        # TTS is optional; terminal output still works if it is unavailable.
         self.tts = TTSService()
         if self.tts.is_available:
             console.print(f"[dim]TTS backend: {self.tts.backend_name}[/dim]")
+
+        # First-run setup is spoken so it does not depend on a display.
+        self.onboarding = OnboardingWizard(
+            settings=settings,
+            respond=self._respond,
+            earcons=self.earcons,
+            console=console,
+            recorder=self.recorder,
+            stt=self.stt,
+            demo_keyboard=demo_keyboard,
+        )
 
         console.print("[green]✓ Echo-Sync initialized[/green]")
 
@@ -162,17 +180,21 @@ class EchoSyncApp:
         self.running = True
         self.interaction_logger.log_system_event("System started")
 
-        # Welcome the user
-        console.print()
-        console.print(
-            Panel(
-                Text(WELCOME_MESSAGE, style="bold cyan"),
-                title="🎵 Echo-Sync",
-                border_style="cyan",
+        # The full tutorial runs once; later starts use the short welcome.
+        if self.onboarding.should_run(force=self.force_setup, skip=self.skip_setup):
+            self.interaction_logger.log_system_event("First-run onboarding started")
+            self.onboarding.run()
+        else:
+            console.print()
+            console.print(
+                Panel(
+                    Text(WELCOME_MESSAGE, style="bold cyan"),
+                    title="🎵 Echo-Sync",
+                    border_style="cyan",
+                )
             )
-        )
-        console.print()
-        self.tts.speak(WELCOME_MESSAGE)
+            console.print()
+            self.tts.speak(WELCOME_MESSAGE)
 
         try:
             while self.running:
@@ -185,11 +207,11 @@ class EchoSyncApp:
         """Execute one full interaction cycle."""
         current_state = self.state_machine.state
         
-        # ── Step 0: Listening earcon before every cycle if awake ─────────────
+        # Let the user know when the assistant is ready for a command.
         if self.state_machine.is_awake():
             self.earcons.play_listening()
 
-        # ── Step 1: Get user input ──────────────────────────────────
+        # Read either typed input or microphone audio.
         if self.demo_keyboard:
             transcript = self._get_keyboard_input()
         else:
@@ -199,7 +221,7 @@ class EchoSyncApp:
             self.running = False
             return
 
-        # ── Step 2: Wake word check ───────────────────────────────
+        # Voice mode ignores background speech until the wake word is heard.
         wake_word = self.settings.wake_word
         if self.demo_keyboard:
             is_woken = True
@@ -235,14 +257,13 @@ class EchoSyncApp:
             self.state_machine.start_clarifying()
             return
 
-        # ── Step 3: Classify intent ─────────────────────────────────
+        # Classify the request and carry out the matching action.
         self.ducker.duck()
         console.print(f"[dim]You said: \"{command_to_process}\"[/dim]")
 
         try:
             intent = self.classifier.classify(command_to_process)
 
-            # ── Step 4: Execute action ──────────────────────────────
             response = self.dialog_manager.handle_intent(intent)
             self._respond(response)
 
@@ -255,7 +276,7 @@ class EchoSyncApp:
             system_response=response,
         )
 
-        # ── Step 5: Update state based on result ────────────────────
+        # Return to the state that matches the result and player status.
         if intent.intent_type in ["unclear", "off_topic", "help_request"]:
             self.state_machine.start_clarifying()
         else:
@@ -299,10 +320,9 @@ class EchoSyncApp:
         if audio_path is None:
             return ""
 
-        # Transcribe
         transcript = self.stt.transcribe(audio_path)
 
-        # Clean up temp file
+        # Recordings are temporary and may contain private speech.
         try:
             audio_path.unlink(missing_ok=True)
         except Exception:
@@ -329,11 +349,9 @@ class EchoSyncApp:
         console.print()
         console.print(f"[cyan]{GOODBYE_MESSAGE}[/cyan]")
 
-        # Clean up player
         if hasattr(self.player, "cleanup"):
             self.player.cleanup()
 
-        # Clean up TTS
         self.tts.cleanup()
 
         self.interaction_logger.log_system_event("System shutdown")
