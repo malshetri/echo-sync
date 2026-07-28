@@ -20,12 +20,10 @@ from echo_sync.config.settings import Settings
 logger = logging.getLogger(__name__)
 
 
-# ── Rule-based fast-path patterns ───────────────────────────────────────────
-# These bypass the AI for common, unambiguous direct commands.
-# This makes the system faster and more reliable for simple cases.
+# Common controls are handled locally so they stay quick and predictable.
 
 DIRECT_COMMAND_PATTERNS: list[tuple[re.Pattern, str, str]] = [
-    # (compiled regex, action, user_feedback)
+    # Each entry contains a pattern, an action, and the spoken reply.
     (re.compile(r"^pause$", re.IGNORECASE), "pause", "Music paused."),
     (re.compile(r"^stop(\s+music)?$", re.IGNORECASE), "stop", "Music stopped."),
     (re.compile(r"^(resume|continue|unpause)$", re.IGNORECASE), "resume", "Resuming music."),
@@ -41,12 +39,21 @@ HELP_PATTERNS: list[re.Pattern] = [
     re.compile(r"^i\s+don'?t\s+know\.?$", re.IGNORECASE),
     re.compile(r"^what\s+(is|are)\s+this\??$", re.IGNORECASE),
     re.compile(r"^what\s+should\s+i\s+(say|do)\??$", re.IGNORECASE),
-    # Catch greetings and wake word variations
+    # Greetings are harmless and should not be sent to the model.
     re.compile(r"^(hi|hey|hello)?\s*(echo|eko|ecco|eco|ekko|acou|ico|iko)\.?$", re.IGNORECASE),
 ]
 
-# ── Playlist keyword → interpreted context mapping ─────────────────────────
-# Used for both "play <keyword> music" and "I am <keyword>" patterns.
+# Phrases used to ask for the currently playing track.
+IDENTIFY_PATTERNS: list[re.Pattern] = [
+    re.compile(r"^what('?s|\s+is|\s+song\s+is|\s+track\s+is)\s+(this|that|it|playing|on)\b.*$", re.IGNORECASE),
+    re.compile(r"^(what|which)\s+(song|track|music)\s+is\s+(this|that|playing|on|it)\b.*$", re.IGNORECASE),
+    re.compile(r"^(name|tell\s+me)\s+(the|this|that)?\s*(song|track).*$", re.IGNORECASE),
+    re.compile(r"^(current|now)\s+(song|track|playing).*$", re.IGNORECASE),
+    re.compile(r"^what('?s|\s+is)\s+(this|that|it)\s+(song|track|called)\??$", re.IGNORECASE),
+    re.compile(r"^who\s+(is|sings|sang)\s+this\b.*$", re.IGNORECASE),
+]
+
+# Keywords shared by playlist requests and context statements.
 PLAYLIST_KEYWORD_MAP: dict[str, str] = {
     # calm
     "calm": "calm",
@@ -82,10 +89,7 @@ PLAYLIST_KEYWORD_MAP: dict[str, str] = {
     "soothing": "sad",
 }
 
-# ── Context statement patterns ──────────────────────────────────────────────
-# Maps the *remainder* after prefix stripping to an interpreted context.
-# e.g. "I am tired" → prefix "i am " → remainder "tired" → lookup "tired".
-# e.g. "I need energy" → prefix "i need " → remainder "energy" → lookup "energy".
+# After removing a phrase such as "I am", these words map to a playlist.
 CONTEXT_STATEMENT_MAP: dict[str, str] = {
     # calm
     "tired": "calm",
@@ -126,7 +130,7 @@ CONTEXT_STATEMENT_MAP: dict[str, str] = {
     "heartbroken": "sad",
 }
 
-# ── Off-topic patterns ──────────────────────────────────────────────────────
+# A small local filter covers common requests outside the music domain.
 OFF_TOPIC_PATTERNS: list[re.Pattern] = [
     re.compile(r"^what\s+(is|are)\s+(?!this\b).+", re.IGNORECASE),
     re.compile(r"^who\s+(is|are|was)\s+.+", re.IGNORECASE),
@@ -138,7 +142,7 @@ OFF_TOPIC_PATTERNS: list[re.Pattern] = [
     re.compile(r"^what.*news.*$", re.IGNORECASE),
 ]
 
-# Response templates for context-to-playlist results
+# Spoken confirmation for each context category.
 _CONTEXT_FEEDBACK: dict[str, str] = {
     "calm": "I'll play something calm and relaxing for you.",
     "energy": "Playing energetic music to boost your energy!",
@@ -167,7 +171,7 @@ def try_rule_based(text: str) -> Optional[IntentResult]:
             user_feedback="I didn't catch that. You can say: play something calm, or ask for help.",
         )
 
-    # ── Direct commands (exact match) ───────────────────────────────
+    # Try the most specific local rules first.
     for pattern, action, feedback in DIRECT_COMMAND_PATTERNS:
         if pattern.match(text):
             return IntentResult(
@@ -178,7 +182,7 @@ def try_rule_based(text: str) -> Optional[IntentResult]:
                 user_feedback=feedback,
             )
 
-    # ── Help requests ───────────────────────────────────────────────
+    # Help phrases
     for pattern in HELP_PATTERNS:
         if pattern.match(text):
             return IntentResult(
@@ -192,11 +196,22 @@ def try_rule_based(text: str) -> Optional[IntentResult]:
                 ),
             )
 
-    # ── "play <keyword> music" → playlist selection ─────────────────
+    # Current-track questions
+    for pattern in IDENTIFY_PATTERNS:
+        if pattern.match(text):
+            return IntentResult(
+                intent_type="direct_command",
+                action="identify",
+                interpreted_context="none",
+                confidence=0.97,
+                user_feedback="Let me check what's playing.",
+            )
+
+    # Playlist requests such as "play calm music"
     play_match = re.match(r"^play\s+(.+)$", text, re.IGNORECASE)
     if play_match:
         target = play_match.group(1).strip().lower()
-        # Remove trailing "music" / "songs" / "playlist" to get the keyword
+        # Keep only the word that describes the requested playlist.
         clean_target = re.sub(
             r"\s*(music|songs?|playlist|tracks?)$", "", target
         ).strip()
@@ -211,7 +226,7 @@ def try_rule_based(text: str) -> Optional[IntentResult]:
                     context, f"Playing {context} music for you."
                 ),
             )
-        # Generic "play <something>" — treat as direct play command
+        # A remaining "play ..." phrase may be a track name.
         return IntentResult(
             intent_type="direct_command",
             action="play",
@@ -220,9 +235,8 @@ def try_rule_based(text: str) -> Optional[IntentResult]:
             user_feedback=f"Playing {play_match.group(1).strip()}.",
         )
 
-    # ── Context statements ("I am tired", "I feel sad", etc.) ───────
+    # Context statements such as "I am tired" or "I feel sad"
     text_lower = text.lower().rstrip(".!?")
-    # Strip common prefixes to isolate the keyword(s)
     for prefix in [
         "i am ", "i'm ", "i feel ", "feeling ", "i am feeling ",
         "i'm feeling ", "i need ", "i want ", "i need to ", "i want to ",
@@ -241,7 +255,7 @@ def try_rule_based(text: str) -> Optional[IntentResult]:
                     ),
                 )
 
-    # ── Off-topic detection ─────────────────────────────────────────
+    # Known off-topic requests can be rejected without an API call.
     for pattern in OFF_TOPIC_PATTERNS:
         if pattern.match(text):
             return IntentResult(
@@ -284,7 +298,7 @@ class IntentClassifier:
         Returns:
             IntentResult with classified intent, action, context, and feedback.
         """
-        # Fast-path: rule-based matching
+        # Local rules cover the commands used most often.
         rule_result = try_rule_based(transcript)
         if rule_result is not None:
             logger.info(
@@ -294,7 +308,7 @@ class IntentClassifier:
             )
             return rule_result
 
-        # AI classification
+        # Use the model only when local rules do not understand the text.
         logger.info("AI classification for: %s", transcript)
         return self._classify_with_ai(transcript)
 
@@ -327,7 +341,7 @@ class IntentClassifier:
                 logger.warning("AI returned empty content")
                 return self._fallback_unclear(transcript)
 
-            # Parse the JSON response into our schema
+            # Pydantic rejects responses that do not follow the expected shape.
             data = json.loads(content)
             result = IntentResult.model_validate(data)
             logger.info(

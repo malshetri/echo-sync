@@ -70,10 +70,9 @@ class DialogManager:
         Returns:
             Response text to speak back to the user.
         """
-        # Apply safety filter
+        # Normalize unsafe or incomplete classifier results before routing.
         intent = self.safety_filter.validate(intent)
 
-        # Route by intent type
         handlers = {
             "direct_command": self._handle_direct_command,
             "context_request": self._handle_context_request,
@@ -89,7 +88,7 @@ class DialogManager:
 
         response = handler(intent)
 
-        # Reset help counters on successful non-help interactions
+        # A successful command starts the progressive help sequence again.
         if intent.intent_type in ("direct_command", "context_request"):
             self.guided_help.reset_counters()
 
@@ -105,7 +104,7 @@ class DialogManager:
         self.earcons.play(EARCON_ERROR)
         return self.guided_help.handle_stt_failure()
 
-    # ── Private handlers ────────────────────────────────────────────────────
+    # Intent handlers
 
     def _handle_direct_command(self, intent: IntentResult) -> str:
         """Handle direct media control commands."""
@@ -115,9 +114,8 @@ class DialogManager:
         try:
             if action == "play":
                 if not self.player.is_playing():
-                    # Try to play from current playlist or load fallback
+                    # Use the fallback folder when no playlist is loaded.
                     if not self.player.play():
-                        # Load fallback playlist
                         tracks = self.playlist_manager.get_playlist("fallback")
                         if tracks:
                             self.player.load_playlist(tracks)
@@ -158,6 +156,10 @@ class DialogManager:
                 response = get_volume_response("volume_down", new_vol)
                 self.earcons.play(EARCON_SUCCESS)
 
+            elif action == "identify":
+                response = self._describe_current_track()
+                self.earcons.play(EARCON_SUCCESS)
+
             else:
                 logger.warning("Unknown direct command action: %s", action)
                 response = intent.user_feedback
@@ -169,12 +171,30 @@ class DialogManager:
 
         return response
 
+    def _describe_current_track(self) -> str:
+        """Build a spoken response announcing the currently playing track (FR-07)."""
+        track = ""
+        if hasattr(self.player, "get_current_track"):
+            track = (self.player.get_current_track() or "").strip()
+
+        # Convert file names such as "soft_piano_01" into spoken titles.
+        pretty = track.replace("_", " ").replace("-", " ").strip()
+
+        is_playing = bool(
+            hasattr(self.player, "is_playing") and self.player.is_playing()
+        )
+
+        if pretty and is_playing:
+            return f"This is {pretty}."
+        if pretty:
+            return f"The last track was {pretty}. Nothing is playing right now."
+        return "Nothing is playing right now. You can say: play something calm."
+
     def _handle_context_request(self, intent: IntentResult) -> str:
         """Handle context/mood-based music requests."""
         context = intent.interpreted_context
         self.earcons.play(EARCON_MOOD_DETECTED)
 
-        # Get playlist path for this context
         playlist_path = self.context_mapper.get_playlist_path(context)
         tracks = self.playlist_manager.get_playlist(playlist_path.name)
 
@@ -182,7 +202,6 @@ class DialogManager:
             logger.warning("No tracks for context '%s'", context)
             return RESPONSE_NO_MUSIC
 
-        # Load and play the playlist
         self.player.load_playlist(tracks)
         self.player.play(tracks[0])
 

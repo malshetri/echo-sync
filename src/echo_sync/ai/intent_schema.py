@@ -38,6 +38,7 @@ class IntentResult(BaseModel):
         "volume_up",
         "volume_down",
         "select_playlist",
+        "identify",
         "help",
         "reject",
         "clarify",
@@ -84,5 +85,6 @@ class IntentResult(BaseModel):
         return self.intent_type == "direct_command"
 
 
-# ── JSON schema for AI prompt injection ─────────────────────────────────────
+# Schema supplied to the model
+# This schema is included in the prompt and validated again after the response.
 INTENT_RESULT_JSON_SCHEMA = IntentResult.model_json_schema()
