@@ -21,8 +21,7 @@ class TTSService:
     """
     Best-effort text-to-speech service.
 
-    Speaks text aloud when possible, never crashes the app.
-    All speech is done in a background thread to avoid blocking.
+    Speaks text aloud when possible and degrades safely when no backend exists.
     """
 
     def __init__(self) -> None:
@@ -35,12 +34,11 @@ class TTSService:
 
     def _init_engine(self) -> None:
         """Try to initialize a TTS engine."""
-        # Try pyttsx3 first
+        # Prefer the same offline library on every platform.
         try:
             import pyttsx3
 
             self._engine = pyttsx3.init()
-            # Set a reasonable speech rate
             self._engine.setProperty("rate", 160)
             self._available = True
             self._backend = "pyttsx3"
@@ -49,7 +47,7 @@ class TTSService:
         except Exception as e:
             logger.debug("pyttsx3 not available: %s", e)
 
-        # Check for OS-level TTS commands
+        # Otherwise use the speech service already provided by the OS.
         system = platform.system()
         if system == "Darwin" and self._command_exists("say"):
             self._available = True
@@ -60,7 +58,7 @@ class TTSService:
             self._backend = "espeak"
             logger.info("TTS initialized with 'espeak' command")
         elif system == "Windows":
-            # Windows has built-in SAPI via PowerShell as a last resort
+            # Windows includes SAPI, so no extra package is needed.
             self._available = True
             self._backend = "sapi"
             logger.info("TTS initialized with Windows SAPI (PowerShell)")
@@ -84,7 +82,7 @@ class TTSService:
 
     def speak(self, text: str) -> None:
         """
-        Speak the given text aloud in a background thread.
+        Speak the given text aloud.
 
         If TTS is unavailable, this is a no-op.
         Never raises — all errors are logged and swallowed.
@@ -92,15 +90,13 @@ class TTSService:
         if not self._available or not text or not text.strip():
             return
 
-        thread = threading.Thread(
-            target=self._speak_blocking,
-            args=(text,),
-            daemon=True,
-        )
-        thread.start()
+        # Serialize responses because overlapping speech is unusable in an
+        # eyes-free interface.
+        with self._lock:
+            self._speak_blocking(text)
 
     def _speak_blocking(self, text: str) -> None:
-        """Synchronously speak the text (called in background thread)."""
+        """Speak the text using the selected backend."""
         try:
             if self._backend == "pyttsx3":
                 self._speak_pyttsx3(text)
@@ -114,36 +110,40 @@ class TTSService:
             logger.error("TTS failed: %s", e)
 
     def _speak_pyttsx3(self, text: str) -> None:
-        """Speak using pyttsx3 engine."""
-        with self._lock:
-            if self._engine is None:
-                return
-            try:
-                self._engine.say(text)
-                self._engine.runAndWait()
-            except RuntimeError:
-                # pyttsx3 can raise if called re-entrantly
-                logger.debug("pyttsx3 busy, skipping utterance")
+        """Speak using pyttsx3 engine (already serialized by speak())."""
+        if self._engine is None:
+            return
+        try:
+            self._engine.say(text)
+            self._engine.runAndWait()
+        except RuntimeError:
+            # Another utterance may still be finishing.
+            logger.debug("pyttsx3 busy, skipping utterance")
 
     @staticmethod
     def _speak_os_command(cmd: list[str]) -> None:
         """Speak using an OS command (say, espeak)."""
-        subprocess.run(cmd, capture_output=True, timeout=15)
+        subprocess.run(cmd, capture_output=True, timeout=60)
 
     @staticmethod
     def _speak_sapi(text: str) -> None:
         """Speak using Windows SAPI via PowerShell."""
-        # Escape single quotes in the text
         safe_text = text.replace("'", "''")
+        # Prefer an English voice because all current prompts are in English.
         ps_command = (
-            f"Add-Type -AssemblyName System.Speech; "
-            f"$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
+            "Add-Type -AssemblyName System.Speech; "
+            "$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
+            "$en = $synth.GetInstalledVoices() | Where-Object "
+            "{ $_.Enabled -and $_.VoiceInfo.Culture.Name -like 'en*' } | "
+            "Select-Object -First 1; "
+            "if ($en) { $synth.SelectVoice($en.VoiceInfo.Name) }; "
+            "$synth.Rate = 2; "
             f"$synth.Speak('{safe_text}')"
         )
         subprocess.run(
             ["powershell", "-Command", ps_command],
             capture_output=True,
-            timeout=15,
+            timeout=60,
         )
 
     @property
