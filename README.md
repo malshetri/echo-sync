@@ -2,7 +2,7 @@
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Project: HTW Berlin](https://img.shields.io/badge/HTW%20Berlin-NUI%20Course-green.svg)](#project-team)
+[![Course: HTW Berlin NUI SS 2026](https://img.shields.io/badge/HTW%20Berlin-NUI%20SS%202026-green.svg)](#project-team)
 
 > **An inclusive, screen-free Natural User Interface music player for blind and motor-impaired users.**
 
@@ -18,11 +18,11 @@ flexible, natural requests.
 
 ## Project Team
 
-Echo-Sync was developed by **Group 7** for the **Natural User Interfaces (NUI)**
-course at HTW Berlin.
+Echo-Sync was developed by **Group 7** for HTW Berlin's **Natural User
+Interfaces (NUI)** course in the **Summer Semester 2026 (SS 2026)**.
 
 - **Project:** Echo-Sync
-- **Course:** Natural User Interfaces
+- **Course:** Natural User Interfaces (NUI), Summer Semester 2026 (SS 2026)
 - **Institution:** HTW Berlin
 - **Team:** Group 7
 
