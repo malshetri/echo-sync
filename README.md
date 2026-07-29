@@ -26,6 +26,19 @@ course at HTW Berlin.
 - **Institution:** HTW Berlin
 - **Team:** Group 7
 
+### Team Roles
+
+| Team Member | Role |
+|---|---|
+| Ahmed Al-Odaini | Project Coordinator, Documentation & Lo-Fi Prototype Lead |
+| Muneer Al-Shetri | Lead Developer & System Architecture Lead |
+| Ammar Albahri | Usability Evaluation Lead |
+| Bashar Al Abdalla | Interaction Lead |
+| Magd Alwajih | Project Support & Review |
+
+Although each member had a primary role, the team collaborated on project
+planning, design decisions, implementation, testing, and review.
+
 
 ## Project Structure
 
