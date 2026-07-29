@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Course: HTW Berlin NUI SS 2026](https://img.shields.io/badge/HTW%20Berlin-NUI%20SS%202026-green.svg)](#project-team)
 
-> **An inclusive, screen-free Natural User Interface music player for blind and motor-impaired users.**
+> **A screen-free Natural User Interface music player designed with accessibility goals, particularly for users with visual or motor impairments.**
 
 Echo-Sync replaces visual menus and touch controls with natural speech, spoken
 responses, and short audio cues. Users can issue direct playback commands or
@@ -361,6 +361,8 @@ The `docs/` directory contains the supporting project work:
 
 ## Known Limitations
 
+- Accessibility has not yet been validated through comprehensive testing with
+  blind and motor-impaired users.
 - Music is loaded from local files; streaming services are not yet integrated.
 - AI classification and the default STT backend require an internet connection
   and an OpenAI API key.
