@@ -33,7 +33,7 @@ course at HTW Berlin.
 | Ahmed Al-Odaini | Project Coordinator, Documentation & Lo-Fi Prototype Lead |
 | Muneer Al-Shetri | Lead Developer & System Architecture Lead |
 | Ammar Albahri | Usability Evaluation Lead |
-| Bashar Al Abdalla | Interaction Lead |
+| Bashar Al Abdalla | AI Interaction Lead |
 | Magd Alwajih | Project Support & Review |
 
 Although each member had a primary role, the team collaborated on project
