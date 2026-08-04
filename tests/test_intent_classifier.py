@@ -14,7 +14,7 @@ from echo_sync.ai.intent_schema import IntentResult
 class TestRuleBasedClassifier:
     """Test the rule-based fast-path classifier."""
 
-    # T01: Play jazz
+    # ── T01: Play jazz ──────────────────────────────────────────────
     def test_play_jazz(self):
         result = try_rule_based("play jazz")
         assert result is not None
@@ -23,7 +23,7 @@ class TestRuleBasedClassifier:
         assert result.confidence >= 0.9
         assert "jazz" in result.user_feedback.lower()
 
-    # T02: Pause
+    # ── T02: Pause ──────────────────────────────────────────────────
     def test_pause(self):
         result = try_rule_based("pause")
         assert result is not None
@@ -31,7 +31,7 @@ class TestRuleBasedClassifier:
         assert result.action == "pause"
         assert result.confidence >= 0.9
 
-    # T03: Continue / resume
+    # ── T03: Continue / Resume ──────────────────────────────────────
     def test_resume(self):
         for word in ["resume", "continue", "unpause"]:
             result = try_rule_based(word)
@@ -39,7 +39,7 @@ class TestRuleBasedClassifier:
             assert result.intent_type == "direct_command"
             assert result.action == "resume"
 
-    # T04: Next song
+    # ── T04: Next song ──────────────────────────────────────────────
     def test_next_song(self):
         for phrase in ["next", "next song"]:
             result = try_rule_based(phrase)
@@ -47,7 +47,7 @@ class TestRuleBasedClassifier:
             assert result.intent_type == "direct_command"
             assert result.action == "next"
 
-    # T05: Previous song
+    # ── T05: Previous song ──────────────────────────────────────────
     def test_previous_song(self):
         for phrase in ["previous", "previous song", "prev", "prev song"]:
             result = try_rule_based(phrase)
@@ -55,7 +55,7 @@ class TestRuleBasedClassifier:
             assert result.intent_type == "direct_command"
             assert result.action == "previous"
 
-    # T06: Volume up
+    # ── T06: Volume up ──────────────────────────────────────────────
     def test_volume_up(self):
         for phrase in ["volume up", "louder", "turn it up", "make it louder"]:
             result = try_rule_based(phrase)
@@ -63,7 +63,7 @@ class TestRuleBasedClassifier:
             assert result.intent_type == "direct_command"
             assert result.action == "volume_up"
 
-    # T07: Volume down
+    # ── T07: Volume down ────────────────────────────────────────────
     def test_volume_down(self):
         for phrase in ["volume down", "quieter", "turn it down", "lower the volume"]:
             result = try_rule_based(phrase)
@@ -71,7 +71,29 @@ class TestRuleBasedClassifier:
             assert result.intent_type == "direct_command"
             assert result.action == "volume_down"
 
-    # T13: Help request
+    # ── Explicit volume level ("set volume to 70 percent") ──────────
+    def test_set_volume_explicit_level(self):
+        cases = [
+            ("set volume to 70", 70),
+            ("set the volume to 70 percent", 70),
+            ("volume to 45%", 45),
+            ("volume 100", 100),
+            ("volume 0", 0),
+        ]
+        for phrase, expected_level in cases:
+            result = try_rule_based(phrase)
+            assert result is not None, f"Failed for '{phrase}'"
+            assert result.intent_type == "direct_command"
+            assert result.action == "set_volume"
+            assert result.volume_level == expected_level
+
+    def test_set_volume_clamps_above_100(self):
+        result = try_rule_based("set volume to 150")
+        assert result is not None
+        assert result.action == "set_volume"
+        assert result.volume_level == 100
+
+    # ── T13: Help request ───────────────────────────────────────────
     def test_help_request(self):
         for phrase in ["help", "help me", "what can I say?"]:
             result = try_rule_based(phrase)
@@ -79,7 +101,7 @@ class TestRuleBasedClassifier:
             assert result.intent_type == "help_request"
             assert result.action == "help"
 
-    # T17: Empty input
+    # ── T17: Empty input (silence) ──────────────────────────────────
     def test_silence_empty(self):
         result = try_rule_based("")
         assert result is not None
@@ -87,21 +109,21 @@ class TestRuleBasedClassifier:
         assert result.action == "clarify"
         assert result.confidence < 0.5
 
-    # T20: Stop music
+    # ── T20: Stop music ─────────────────────────────────────────────
     def test_stop(self):
         result = try_rule_based("stop")
         assert result is not None
         assert result.intent_type == "direct_command"
         assert result.action == "stop"
 
-    # Play a named target
+    # ── Play with target ────────────────────────────────────────────
     def test_play_with_target(self):
         result = try_rule_based("play something relaxing")
         assert result is not None
         assert result.intent_type == "direct_command"
         assert result.action == "play"
 
-    # Context requests handled by local rules
+    # ── Context requests now handled by rules ──────────────────────
     def test_context_handled_by_rules(self):
         """Context requests like 'I am tired' should match rules directly."""
         result = try_rule_based("I am tired")
@@ -117,7 +139,7 @@ class TestRuleBasedClassifier:
         assert result.intent_type == "off_topic"
         assert result.action == "reject"
 
-    # Case-insensitive matching
+    # ── Case insensitivity ──────────────────────────────────────────
     def test_case_insensitive(self):
         result = try_rule_based("PAUSE")
         assert result is not None
@@ -204,7 +226,7 @@ class TestAIClassifier:
     @patch("echo_sync.ai.intent_classifier.OpenAI")
     def test_ai_fallback_stop_music(self, mock_openai_cls, mock_settings):
         mock_openai = mock_openai_cls.return_value
-        # Return a valid structured response from the mocked API.
+        # Setup mock JSON response
         mock_response = mock_openai.chat.completions.create.return_value
         mock_message = mock_response.choices[0].message
         mock_message.content = '{"intent_type": "direct_command", "action": "stop", "interpreted_context": "calm", "confidence": 0.95, "user_feedback": "Stopping the music."}'
@@ -212,8 +234,10 @@ class TestAIClassifier:
         from echo_sync.ai.intent_classifier import IntentClassifier
         classifier = IntentClassifier(mock_settings)
         
+        # Act
         result = classifier.classify("I want to sleep, stop the music")
         
+        # Assert
         assert result.intent_type == "direct_command"
         assert result.action == "stop"
         assert result.interpreted_context == "calm"

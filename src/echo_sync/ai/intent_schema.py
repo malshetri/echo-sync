@@ -5,7 +5,7 @@ Defines the strict output format for the AI intent classifier
 using Pydantic models for type-safe, validated results.
 """
 
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -37,6 +37,7 @@ class IntentResult(BaseModel):
         "previous",
         "volume_up",
         "volume_down",
+        "set_volume",
         "select_playlist",
         "identify",
         "help",
@@ -68,6 +69,16 @@ class IntentResult(BaseModel):
         description="AI confidence score between 0.0 and 1.0.",
     )
 
+    volume_level: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=100,
+        description=(
+            "Explicit target volume percentage (0-100), only set when "
+            "action is 'set_volume' and the user named a specific level."
+        ),
+    )
+
     user_feedback: str = Field(
         description="Short, accessible response to speak back to the user.",
     )
@@ -85,6 +96,5 @@ class IntentResult(BaseModel):
         return self.intent_type == "direct_command"
 
 
-# Schema supplied to the model
-# This schema is included in the prompt and validated again after the response.
+# ── JSON schema for AI prompt injection ─────────────────────────────────────
 INTENT_RESULT_JSON_SCHEMA = IntentResult.model_json_schema()
