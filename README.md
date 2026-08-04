@@ -15,6 +15,12 @@ The application combines a fast rule-based command path with AI-assisted intent
 classification. Common controls stay predictable, while flexible requests can
 still be understood naturally.
 
+## Live Demo
+
+Watch a short demonstration of Echo Sync's voice and audio interaction:
+
+▶️ **[Watch the Echo Sync live demo](docs/demo/Echo_Sync_Live_Demo.mp4)**
+
 ## Highlights
 
 - **Natural voice control:** Play, pause, resume, skip tracks, adjust volume, and
@@ -128,7 +134,7 @@ Interfaces (NUI)** course in the **Summer Semester 2026 (SS 2026)**.
 | Ahmed Al-Odaini | Project Coordinator, Prototype & Voice/Speech Pipeline Lead |
 | Ammar Albahri | Usability Evaluation Lead |
 | Bashar Al Abdalla | AI Interaction Lead |
-| Magd Alwajih |  Tech Stackو Testing/CI Lead & Review |
+| Magd Alwajih | Tech Stack & Testing/CI Lead & Review |
 
 The team collaborated on planning, design decisions, implementation, testing,
 and review alongside these primary responsibilities.
