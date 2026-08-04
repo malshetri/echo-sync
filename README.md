@@ -69,7 +69,7 @@ Keyboard demo mode and common rule-based commands can run without an API key.
 ### Install
 
 ```bash
-git clone https://github.com/malshetri/echo-sync.git
+git clone https://github.com/echo-sync-group7/echo-sync.git
 cd echo-sync
 python -m venv .venv
 python -m pip install -e ".[dev]"
