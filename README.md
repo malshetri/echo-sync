@@ -125,10 +125,10 @@ Interfaces (NUI)** course in the **Summer Semester 2026 (SS 2026)**.
 | Team Member | Primary Role |
 |---|---|
 | Muneer Al-Shetri | Lead Developer & System Architecture Lead |
-| Ahmed Al-Odaini | Project Coordinator, Documentation & Lo-Fi Prototype Lead |
+| Ahmed Al-Odaini | Project Coordinator, Prototype & Voice/Speech Pipeline Lead |
 | Ammar Albahri | Usability Evaluation Lead |
 | Bashar Al Abdalla | AI Interaction Lead |
-| Magd Alwajih | Project Support & Review |
+| Magd Alwajih |  Tech Stackو Testing/CI Lead & Review |
 
 The team collaborated on planning, design decisions, implementation, testing,
 and review alongside these primary responsibilities.
