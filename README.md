@@ -19,7 +19,7 @@ still be understood naturally.
 
 Watch a short demonstration of Echo Sync's voice and audio interaction:
 
-▶️ **[Watch the Echo Sync live demo](docs/demo/Echo_Sync_Live_Demo.mp4)**
+▶️ **[Watch the Echo Sync live demo on YouTube](https://youtu.be/3G0jFKz5XHY)**
 
 ## Highlights
 
