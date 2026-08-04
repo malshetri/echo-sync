@@ -78,3 +78,25 @@ class TestSmartDucker:
         """update_target_volume should change the restore target."""
         ducker.update_target_volume(90)
         assert ducker._original_volume == 90
+
+    def test_effective_volume_not_ducked_reads_live_volume(self, ducker, mock_player):
+        """Not ducked: effective volume is the player's live volume."""
+        mock_player.get_volume.return_value = 65
+        assert ducker.get_effective_volume() == 65
+
+    def test_effective_volume_while_ducked_returns_pre_duck_volume(
+        self, ducker, mock_player
+    ):
+        """
+        Ducked: effective volume must be the saved pre-duck level (80),
+        not the live ducked level (30) — this is what the volume up/down
+        bug depended on.
+        """
+        mock_player.get_volume.return_value = 80
+        ducker.duck()
+        assert ducker.get_effective_volume() == 80
+
+    def test_effective_volume_no_player_falls_back_to_original(self):
+        """With no player attached, fall back to the tracked original volume."""
+        d = SmartDucker(ducking_volume=30)
+        assert d.get_effective_volume() == d._original_volume

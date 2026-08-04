@@ -70,9 +70,10 @@ class DialogManager:
         Returns:
             Response text to speak back to the user.
         """
-        # Normalize unsafe or incomplete classifier results before routing.
+        # Apply safety filter
         intent = self.safety_filter.validate(intent)
 
+        # Route by intent type
         handlers = {
             "direct_command": self._handle_direct_command,
             "context_request": self._handle_context_request,
@@ -88,7 +89,7 @@ class DialogManager:
 
         response = handler(intent)
 
-        # A successful command starts the progressive help sequence again.
+        # Reset help counters on successful non-help interactions
         if intent.intent_type in ("direct_command", "context_request"):
             self.guided_help.reset_counters()
 
@@ -104,7 +105,7 @@ class DialogManager:
         self.earcons.play(EARCON_ERROR)
         return self.guided_help.handle_stt_failure()
 
-    # Intent handlers
+    # ── Private handlers ────────────────────────────────────────────────────
 
     def _handle_direct_command(self, intent: IntentResult) -> str:
         """Handle direct media control commands."""
@@ -114,8 +115,9 @@ class DialogManager:
         try:
             if action == "play":
                 if not self.player.is_playing():
-                    # Use the fallback folder when no playlist is loaded.
+                    # Try to play from current playlist or load fallback
                     if not self.player.play():
+                        # Load fallback playlist
                         tracks = self.playlist_manager.get_playlist("fallback")
                         if tracks:
                             self.player.load_playlist(tracks)
@@ -143,18 +145,23 @@ class DialogManager:
                 self.earcons.play(EARCON_SUCCESS)
 
             elif action == "volume_up":
-                new_vol = self.player.volume_up()
-                if hasattr(self.ducker, "update_target_volume"):
-                    self.ducker.update_target_volume(new_vol)
+                new_vol = self._adjust_volume(delta=10)
                 response = get_volume_response("volume_up", new_vol)
                 self.earcons.play(EARCON_SUCCESS)
 
             elif action == "volume_down":
-                new_vol = self.player.volume_down()
-                if hasattr(self.ducker, "update_target_volume"):
-                    self.ducker.update_target_volume(new_vol)
+                new_vol = self._adjust_volume(delta=-10)
                 response = get_volume_response("volume_down", new_vol)
                 self.earcons.play(EARCON_SUCCESS)
+
+            elif action == "set_volume":
+                target = intent.volume_level
+                if target is None:
+                    response = "I didn't catch what level you wanted. Try: set volume to 70 percent."
+                else:
+                    new_vol = self._adjust_volume(absolute=target)
+                    response = get_volume_response("set_volume", new_vol)
+                    self.earcons.play(EARCON_SUCCESS)
 
             elif action == "identify":
                 response = self._describe_current_track()
@@ -171,13 +178,42 @@ class DialogManager:
 
         return response
 
+    def _adjust_volume(
+        self,
+        delta: Optional[int] = None,
+        absolute: Optional[int] = None,
+    ) -> int:
+        """
+        Compute and apply a new volume, relative to (or ducking) correctly.
+
+        Relative changes (delta) and absolute targets are both based on the
+        "effective" volume — the pre-duck target if Smart Ducking is
+        currently active, since the player's live volume is temporarily
+        lowered for speech clarity and must not be used as the baseline.
+
+        While ducked, only the ducking target is updated (the audible
+        change lands smoothly when it un-ducks); otherwise the player
+        volume is changed immediately.
+        """
+        base = self.ducker.get_effective_volume()
+        new_vol = base + delta if delta is not None else absolute
+        new_vol = max(0, min(100, new_vol))
+
+        if self.ducker.is_ducked:
+            self.ducker.update_target_volume(new_vol)
+        else:
+            self.player.set_volume(new_vol)
+            self.ducker.update_target_volume(new_vol)
+
+        return new_vol
+
     def _describe_current_track(self) -> str:
         """Build a spoken response announcing the currently playing track (FR-07)."""
         track = ""
         if hasattr(self.player, "get_current_track"):
             track = (self.player.get_current_track() or "").strip()
 
-        # Convert file names such as "soft_piano_01" into spoken titles.
+        # Turn a file stem like "soft_piano_01" into "soft piano 01"
         pretty = track.replace("_", " ").replace("-", " ").strip()
 
         is_playing = bool(
@@ -195,6 +231,7 @@ class DialogManager:
         context = intent.interpreted_context
         self.earcons.play(EARCON_MOOD_DETECTED)
 
+        # Get playlist path for this context
         playlist_path = self.context_mapper.get_playlist_path(context)
         tracks = self.playlist_manager.get_playlist(playlist_path.name)
 
@@ -202,6 +239,7 @@ class DialogManager:
             logger.warning("No tracks for context '%s'", context)
             return RESPONSE_NO_MUSIC
 
+        # Load and play the playlist
         self.player.load_playlist(tracks)
         self.player.play(tracks[0])
 
